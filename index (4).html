@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B-T AI — chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#212121;
+    --paper-dim:#2A2A2A;
+    --surface:#2F2F2F;
+    --ink:#ECECEC;
+    --ink-soft:#9B9B93;
+    --forest:#171717;
+    --forest-light:#2A2A2A;
+    --gold:#D4A72C;
+    --gold-soft:#3A331A;
+    --line:#3A3A3A;
+    --danger:#F16A5C;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+  ::selection{background:var(--gold-soft);}
+
+  .sidebar{
+    width:270px;
+    min-width:270px;
+    background:var(--forest);
+    color:#EFEBDD;
+    display:flex;
+    flex-direction:column;
+    padding:20px 16px;
+  }
+  .brand{display:flex;align-items:baseline;gap:8px;margin-bottom:22px;padding:0 4px;}
+  .brand .mark{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:#fff;}
+  .brand .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--gold-soft);text-transform:uppercase;}
+  .new-chat{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);
+    color:#fff;padding:10px 14px;border-radius:var(--radius);
+    font-size:14px;font-weight:500;cursor:pointer;transition:background .18s ease, transform .18s ease;font-family:inherit;
+  }
+  .new-chat:hover{background:rgba(255,255,255,0.13);transform:translateY(-1px);}
+  .new-chat:active{transform:translateY(0);}
+  .new-chat svg{width:16px;height:16px;flex-shrink:0;}
+
+  .thread-list{
+    margin-top:20px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;
+    position:relative;padding-left:10px;border-left:1px solid rgba(255,255,255,0.1);
+  }
+  .thread-item{
+    position:relative;padding:9px 12px;border-radius:8px;font-size:13.5px;color:#C9C7BE;
+    cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    transition:background .18s ease, transform .18s ease, color .18s ease;
+  }
+  .thread-item::before{content:'';position:absolute;left:-11px;top:50%;width:8px;height:1px;background:rgba(255,255,255,0.18);}
+  .thread-item:hover{background:rgba(255,255,255,0.06);transform:translateX(2px);color:#fff;}
+  .thread-item.active{background:rgba(255,255,255,0.12);color:#fff;font-weight:500;}
+
+  .plan-box{margin-top:16px;padding:14px;background:rgba(0,0,0,0.18);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.1);}
+  .plan-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .plan-name{font-size:13px;font-weight:600;color:#fff;}
+  .plan-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--gold);color:#3A2E08;padding:2px 7px;border-radius:99px;font-weight:500;}
+  .plan-meter{height:5px;background:rgba(255,255,255,0.15);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+  .plan-meter-fill{height:100%;background:var(--gold);border-radius:99px;transition:width .3s ease;}
+  .plan-caption{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B7B3A2;}
+  .upgrade-btn{
+    width:100%;margin-top:10px;padding:8px;background:var(--gold);color:#2A2109;border:none;
+    border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+    transition:transform .18s ease, filter .18s ease;
+  }
+  .upgrade-btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+  .upgrade-btn:active{transform:translateY(0);}
+
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{padding:14px 28px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .topbar-title{font-size:14.5px;font-weight:500;color:var(--ink);}
+  .topbar-title span{color:var(--ink-soft);font-weight:400;}
+  .model-pill{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;color:var(--ink-soft);}
+
+  .messages{flex:1;overflow-y:auto;padding:32px 0 12px;}
+  .msg-wrap{
+    max-width:680px;margin:0 auto 22px;padding:0 24px;display:flex;gap:14px;
+    animation:msgIn .35s ease both;
+  }
+  @keyframes msgIn{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .avatar{
+    width:30px;height:30px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-size:13px;font-weight:600;margin-top:2px;transition:transform .18s ease;
+  }
+  .msg-wrap:hover .avatar{transform:scale(1.06);}
+  .avatar.user{background:var(--paper-dim);color:var(--ink);}
+  .avatar.ai{background:var(--forest);color:#fff;}
+  .bubble{flex:1;padding-top:4px;}
+  .bubble .role{font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .bubble .text{font-size:15px;line-height:1.65;color:var(--ink);white-space:pre-wrap;}
+
+  .empty-state{max-width:520px;margin:10vh auto 0;text-align:center;padding:0 24px;animation:msgIn .4s ease both;}
+  .empty-state .mark{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--gold);margin-bottom:10px;}
+  .empty-state p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;}
+
+  .composer{padding:16px 24px 22px;border-top:1px solid var(--line);}
+  .composer-inner{
+    max-width:680px;margin:0 auto;display:flex;align-items:flex-end;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 16px;
+    transition:border-color .2s ease;
+  }
+  .composer-inner:focus-within{border-color:var(--forest-light);}
+  textarea{flex:1;border:none;outline:none;resize:none;font-family:'Inter',sans-serif;font-size:14.5px;line-height:1.5;max-height:160px;color:var(--ink);background:transparent;}
+  textarea::placeholder{color:#A6A192;}
+  .send-btn{
+    width:36px;height:36px;border-radius:9px;background:var(--forest-light);border:none;color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+    transition:background .18s ease, transform .18s ease;
+  }
+  .send-btn:hover:not(:disabled){background:var(--gold);color:#2A2109;transform:scale(1.06);}
+  .send-btn:disabled{background:var(--line);cursor:not-allowed;}
+  .send-btn svg{width:16px;height:16px;}
+  .composer-note{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:8px;font-family:'IBM Plex Mono',monospace;}
+
+  .typing{display:flex;gap:4px;padding:6px 0;}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);animation:blink 1.2s infinite ease-in-out;}
+  .typing span:nth-child(2){animation-delay:.2s;}
+  .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){.typing span{animation:none;}}
+  @media (max-width:720px){
+    .sidebar{position:absolute;z-index:10;height:100%;transform:translateX(-100%);transition:transform .2s ease;}
+    .sidebar.open{transform:translateX(0);}
+  }
+</style>
+</head>
+<body>
+
+  <div class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="mark">B-T AI</span>
+      <span class="sub" id="userGreeting">chat</span>
+    </div>
+    <button class="new-chat" id="newChatBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New chat
+    </button>
+    <div class="thread-list" id="threadList"></div>
+    <div class="plan-box">
+      <div class="plan-row">
+        <span class="plan-name">Free plan</span>
+        <span class="plan-badge" id="planBadge">FREE</span>
+      </div>
+      <div class="plan-meter"><div class="plan-meter-fill" id="planMeterFill" style="width:0%"></div></div>
+      <div class="plan-caption" id="planCaption">0 / 100 today</div>
+      <button class="upgrade-btn" id="upgradeBtn">Upgrade to Pro — Rs. 250/mo</button>
+    </div>
+    <div style="margin-top:10px;text-align:center;">
+      <a href="#" id="logoutLink" style="font-size:11.5px;color:#8A887E;text-decoration:none;transition:color .18s ease;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#8A887E'">Log out</a>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="threadTitle">New chat <span>· demo mode</span></div>
+      <div class="model-pill">model: demo-v1</div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <div class="mark">B-T AI</div>
+        <p>Type a question below to start chatting. This is a live demo — connect the backend guide below for real AI responses.</p>
+      </div>
+    </div>
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Type your message..."></textarea>
+        <button class="send-btn" id="sendBtn" disabled aria-label="Send">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </div>
+      <div class="composer-note">B-T AI — your data stays in your own database</div>
+    </div>
+  </div>
+
+<script>
+  // Set this to your Render backend URL once it's deployed, e.g. "https://bt-ai-backend.onrender.com"
+  const BACKEND_URL = "https://bachakhanb-tai.bonto.run";
+
+  let currentUserId = localStorage.getItem('bt_user_id');
+  let currentUserName = localStorage.getItem('bt_user_name');
+  if (!currentUserId) {
+    currentUserId = 'demo-user';
+    currentUserName = 'Demo';
+  }
+  document.getElementById('userGreeting').textContent = currentUserName ? `Welcome, ${currentUserName}` : 'chat';
+  document.getElementById('logoutLink').onclick = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('bt_user_id');
+    localStorage.removeItem('bt_user_name');
+    window.location.href = 'auth.html';
+  };
+
+  const DAILY_LIMIT = 100;
+  const state = {
+    threads: JSON.parse(localStorage.getItem('bt_threads') || '[]'),
+    activeId: null,
+    usedToday: parseInt(localStorage.getItem('bt_used_' + todayKey()) || '0', 10),
+  };
+
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+  function save(){ localStorage.setItem('bt_threads', JSON.stringify(state.threads)); }
+  function saveUsage(){ localStorage.setItem('bt_used_' + todayKey(), String(state.usedToday)); }
+
+  const threadListEl = document.getElementById('threadList');
+  const messagesEl = document.getElementById('messages');
+  const emptyStateEl = document.getElementById('emptyState');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  const threadTitleEl = document.getElementById('threadTitle');
+  const planMeterFill = document.getElementById('planMeterFill');
+  const planCaption = document.getElementById('planCaption');
+
+  function renderThreadList(){
+    threadListEl.innerHTML = '';
+    state.threads.slice().reverse().forEach(t => {
+      const item = document.createElement('div');
+      item.className = 'thread-item' + (t.id === state.activeId ? ' active' : '');
+      item.textContent = t.title;
+      item.onclick = () => { state.activeId = t.id; renderAll(); };
+      threadListEl.appendChild(item);
+    });
+  }
+
+  function renderMessages(){
+    const thread = state.threads.find(t => t.id === state.activeId);
+    messagesEl.innerHTML = '';
+    if(!thread || thread.messages.length === 0){
+      messagesEl.appendChild(emptyStateEl);
+      threadTitleEl.innerHTML = 'New chat <span>· demo mode</span>';
+      return;
+    }
+    threadTitleEl.innerHTML = thread.title + ' <span>· demo mode</span>';
+    thread.messages.forEach(m => {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap';
+      wrap.innerHTML = `
+        <div class="avatar ${m.role === 'user' ? 'user' : 'ai'}">${m.role === 'user' ? 'You' : 'AI'}</div>
+        <div class="bubble">
+          <div class="role">${m.role === 'user' ? 'You' : 'B-T AI'}</div>
+          <div class="text"></div>
+        </div>`;
+      wrap.querySelector('.text').textContent = m.content;
+      messagesEl.appendChild(wrap);
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function renderPlan(){
+    const pct = Math.min(100, (state.usedToday / DAILY_LIMIT) * 100);
+    planMeterFill.style.width = pct + '%';
+    planCaption.textContent = `${state.usedToday} / ${DAILY_LIMIT} today`;
+  }
+
+  function renderAll(){ renderThreadList(); renderMessages(); renderPlan(); }
+
+  document.getElementById('newChatBtn').onclick = () => {
+    const thread = { id: crypto.randomUUID(), title: 'New chat', messages: [] };
+    state.threads.push(thread);
+    state.activeId = thread.id;
+    save();
+    renderAll();
+    inputEl.focus();
+  };
+
+  document.getElementById('upgradeBtn').onclick = () => {
+    alert('Connect your payment flow here (EasyPaisa / JazzCash / card) — the transaction will be recorded in the payments table (schema.sql).');
+  };
+
+  inputEl.addEventListener('input', () => {
+    sendBtn.disabled = inputEl.value.trim().length === 0;
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 160) + 'px';
+  });
+  inputEl.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  async function sendMessage(){
+    const text = inputEl.value.trim();
+    if(!text) return;
+
+    if(state.usedToday >= DAILY_LIMIT){
+      alert("You've reached today's free limit (100 messages). Upgrade to Pro for unlimited access.");
+      return;
+    }
+
+    let thread = state.threads.find(t => t.id === state.activeId);
+    if(!thread){
+      thread = { id: crypto.randomUUID(), title: text.slice(0, 40), messages: [] };
+      state.threads.push(thread);
+      state.activeId = thread.id;
+    }
+    if(thread.messages.length === 0){ thread.title = text.slice(0, 40); }
+
+    thread.messages.push({ role: 'user', content: text });
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    save();
+    renderAll();
+
+    const typingWrap = document.createElement('div');
+    typingWrap.className = 'msg-wrap';
+    typingWrap.innerHTML = `<div class="avatar ai">AI</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    messagesEl.appendChild(typingWrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    const reply = await getAIResponse(text);
+
+    typingWrap.remove();
+    thread.messages.push({ role: 'assistant', content: reply });
+    state.usedToday++;
+    save(); saveUsage();
+    renderAll();
+  }
+
+  // ---------------------------------------------------------
+  // Replace this function to call YOUR backend (see server.js),
+  // which securely calls the AI provider using your own API key.
+  // Never call the AI API directly from this frontend in production —
+  // that would expose your API key to every visitor.
+  // ---------------------------------------------------------
+  async function getAIResponse(userText){
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId: state.activeId, message: userText, userId: currentUserId })
+      });
+      if(!res.ok) throw new Error('backend not available');
+      const data = await res.json();
+      // Adopt the real database conversation id so future messages in this thread match correctly
+      if (data.conversationId && data.conversationId !== state.activeId) {
+        const thread = state.threads.find(t => t.id === state.activeId);
+        if (thread) thread.id = data.conversationId;
+        state.activeId = data.conversationId;
+        save();
+      }
+      return data.reply;
+    }catch(err){
+      await new Promise(r => setTimeout(r, 600));
+      return `(demo reply) You asked: "${userText}"\n\nFor a real AI response, run the backend (server.js) and set your API key in .env.`;
+    }
+  }
+
+  renderAll();
+</script>
+</body>
+</html>
