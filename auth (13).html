@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B-T AI — log in or sign up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#090A11;
+    --glass:rgba(255,255,255,0.045);
+    --glass-hover:rgba(255,255,255,0.08);
+    --glass-border:rgba(255,255,255,0.09);
+    --ink:#F1F0F7;
+    --ink-soft:#8B899C;
+    --violet:#8B5CF6;
+    --cyan:#22D3EE;
+    --accent-grad:linear-gradient(135deg,var(--violet),var(--cyan));
+    --line:rgba(255,255,255,0.09);
+    --danger:#FF6B6B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg-deep);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  ::selection{background:rgba(139,92,246,0.35);}
+
+  .glow-orb{position:fixed;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;opacity:.32;}
+  .glow-orb.o1{width:480px;height:480px;background:var(--violet);top:-140px;left:-100px;animation:drift1 22s ease-in-out infinite;}
+  .glow-orb.o2{width:420px;height:420px;background:var(--cyan);bottom:-120px;right:-90px;animation:drift2 26s ease-in-out infinite;}
+  @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,40px);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,-30px);}}
+  @media (prefers-reduced-motion: reduce){.glow-orb{animation:none;}}
+
+  .card{
+    position:relative;z-index:1;
+    width:100%;
+    max-width:380px;
+    background:var(--glass);
+    backdrop-filter:blur(28px);
+    -webkit-backdrop-filter:blur(28px);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    padding:32px 28px;
+    animation:cardIn .5s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(16px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .mark{
+    font-family:'Sora',sans-serif;
+    font-size:28px;
+    font-weight:700;
+    background:var(--accent-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+    text-align:center;
+    margin-bottom:4px;
+  }
+  .tagline{text-align:center;font-size:13px;color:var(--ink-soft);margin-bottom:24px;}
+  .tabs{display:flex;background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;padding:4px;margin-bottom:22px;}
+  .tab{flex:1;text-align:center;padding:8px;font-size:13.5px;font-weight:500;color:var(--ink-soft);border-radius:9px;cursor:pointer;transition:all .2s ease;}
+  .tab.active{background:var(--accent-grad);color:#0A0B12;font-weight:600;box-shadow:0 0 16px rgba(139,92,246,0.35);}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:.03em;color:var(--ink-soft);margin-bottom:6px;margin-top:14px;text-transform:uppercase;}
+  input{
+    width:100%;padding:11px 12px;border:1px solid var(--glass-border);border-radius:10px;
+    font-size:14.5px;font-family:inherit;outline:none;color:var(--ink);background:rgba(0,0,0,0.2);
+    transition:all .2s ease;
+  }
+  input:focus{border-color:rgba(139,92,246,0.5);box-shadow:0 0 0 1px rgba(139,92,246,0.15), 0 0 20px rgba(139,92,246,0.18);}
+  input::placeholder{color:var(--ink-soft);}
+  .field-hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .submit-btn{
+    width:100%;margin-top:22px;padding:12px;background:var(--accent-grad);color:#0A0B12;
+    border:none;border-radius:11px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    transition:all .2s ease;
+  }
+  .submit-btn:hover{box-shadow:0 0 24px rgba(139,92,246,0.45);transform:translateY(-1px);}
+  .submit-btn:active{transform:translateY(0);}
+  .submit-btn:disabled{background:var(--glass);color:var(--ink-soft);cursor:not-allowed;transform:none;box-shadow:none;}
+  .error-box{
+    display:none;margin-top:14px;padding:10px 12px;background:rgba(255,107,107,0.1);
+    border:1px solid rgba(255,107,107,0.3);border-radius:10px;color:var(--danger);font-size:13px;
+  }
+  .name-field{display:none;}
+  .legal-note{text-align:center;font-size:11px;color:var(--ink-soft);margin-top:14px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+  <div class="glow-orb o1"></div>
+  <div class="glow-orb o2"></div>
+
+  <div class="card">
+    <div class="mark">B-T AI</div>
+    <div class="tagline">Start chatting with your own AI</div>
+
+    <div class="tabs">
+      <div class="tab active" id="loginTab">Log in</div>
+      <div class="tab" id="signupTab">Sign up</div>
+    </div>
+
+    <form id="authForm">
+      <div class="name-field" id="nameField">
+        <label for="name">Name</label>
+        <input type="text" id="name" placeholder="Your full name" autocomplete="name">
+      </div>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="At least 8 characters" autocomplete="current-password" required minlength="8">
+      <div class="field-hint" id="pwHint" style="display:none">Password must be at least 8 characters</div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Log in</button>
+      <div class="error-box" id="errorBox"></div>
+      <div class="legal-note">By continuing, you agree to our Terms of Service and Privacy Policy.</div>
+    </form>
+  </div>
+
+<script>
+  // If the person is already logged in (their login was saved on this device
+  // last time), skip the login form entirely and go straight to the chat —
+  // exactly like Gemini/ChatGPT do. Only shows this form after a real logout.
+  if (localStorage.getItem('bt_user_id')) {
+    window.location.href = 'index.html';
+  }
+
+  // Always talk to the Bonto backend directly, no matter which domain
+  // (Bonto preview or GitHub Pages) is currently serving this HTML file.
+  const BACKEND_URL = 'https://bachakhanb-tai.bonto.run';
+
+  const loginTab = document.getElementById('loginTab');
+  const signupTab = document.getElementById('signupTab');
+  const nameField = document.getElementById('nameField');
+  const nameInput = document.getElementById('name');
+  const pwHint = document.getElementById('pwHint');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorBox');
+  const form = document.getElementById('authForm');
+
+  let mode = 'login';
+
+  function setMode(newMode){
+    mode = newMode;
+    loginTab.classList.toggle('active', mode === 'login');
+    signupTab.classList.toggle('active', mode === 'signup');
+    nameField.style.display = mode === 'signup' ? 'block' : 'none';
+    nameInput.required = mode === 'signup';
+    pwHint.style.display = mode === 'signup' ? 'block' : 'none';
+    submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Log in';
+    errorBox.style.display = 'none';
+  }
+
+  loginTab.onclick = () => setMode('login');
+  signupTab.onclick = () => setMode('signup');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'One moment...';
+
+    const body = {
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value,
+    };
+    if (mode === 'signup') body.name = nameInput.value.trim();
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/${mode === 'signup' ? 'signup' : 'login'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+      localStorage.setItem('bt_user_id', data.userId);
+      localStorage.setItem('bt_user_name', data.name || '');
+      window.location.href = 'index.html';
+    } catch (err) {
+      errorBox.textContent = navigator.onLine
+        ? err.message
+        : "You're offline. Please check your internet connection and try again.";
+      errorBox.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Log in';
+    }
+  });
+</script>
+</body>
+</html>
