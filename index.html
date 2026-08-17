@@ -923,9 +923,6 @@
   inputEl.addEventListener('keydown', (e) => {
     if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
   });
-  // Mobile virtual keyboards often send a line-break input event instead of
-  // a real 'Enter' keydown — this catches that so Send works directly from
-  // the keyboard's arrow/send key, without needing to close the keyboard first.
   inputEl.addEventListener('beforeinput', (e) => {
     if(e.inputType === 'insertLineBreak'){
       e.preventDefault();
@@ -945,12 +942,7 @@
     }
   });
 
-  // ---------------------------------------------------------
-  // Attach / upload — like Gemini's attach button under the
-  // composer. Shows a small preview chip; the image travels
-  // with the next message the user sends.
-  // ---------------------------------------------------------
-  let pendingAttachment = null; // { dataUrl, name }
+  let pendingAttachment = null;
 
   const plusMenu = document.getElementById('plusMenu');
   const menuUploadFiles = document.getElementById('menuUploadFiles');
@@ -1019,10 +1011,6 @@
     attachPreview.appendChild(chip);
   }
 
-  // ---------------------------------------------------------
-  // Voice input (mic button) — uses the browser's built-in
-  // Speech Recognition, free, no API key needed.
-  // ---------------------------------------------------------
   const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let isListening = false;
@@ -1066,19 +1054,12 @@
     });
   }
 
-  // ---------------------------------------------------------
-  // Image generation — (1) dedicated button, (2) auto-detect
-  // from normal chat text (e.g. "image banao a sunset")
-  // ---------------------------------------------------------
   const IMAGE_TRIGGERS = ['image banao', 'photo banao', 'picture banao', 'tasveer banao', 'generate image', 'draw'];
 
   function isImageRequest(text){
     const lower = text.toLowerCase();
     return IMAGE_TRIGGERS.some(t => lower.includes(t));
   }
-
-  // Clicking "Create image" in the + menu primes the normal chat box,
-  // exactly like ChatGPT/Gemini's image mode — see menuCreateImage above.
 
   function cleanImagePrompt(text){
     let cleaned = text;
@@ -1187,14 +1168,12 @@
     renderAttachPreview();
     sendBtn.disabled = true;
 
-    // If the message looks like an image request, generate an image instead
     if(imageMode && text){
       setImageMode(false);
       await handleImageRequest(text);
       return;
     }
 
-    // Auto-detect from plain typed text too (e.g. "image banao a sunset")
     if(text && isImageRequest(text)){
       await handleImageRequest(text);
       return;
@@ -1247,12 +1226,6 @@
     renderAll();
   }
 
-  // ---------------------------------------------------------
-  // Replace this function to call YOUR backend (see server.js),
-  // which securely calls the AI provider using your own API key.
-  // Never call the AI API directly from this frontend in production —
-  // that would expose your API key to every visitor.
-  // ---------------------------------------------------------
   let activeController = null;
 
   function showStopButton(){
@@ -1282,12 +1255,6 @@
     }
   }
 
-  // ---------------------------------------------------------
-  // Full-screen voice call mode — like ChatGPT/Gemini's voice
-  // conversation: listen, send to AI, speak the reply, repeat.
-  // Uses the browser's built-in Speech Recognition + Speech
-  // Synthesis (free, no extra API).
-  // ---------------------------------------------------------
   const callScreen = document.getElementById('callScreen');
   const callStatus = document.getElementById('callStatus');
   const callEndBtn = document.getElementById('callEndBtn');
@@ -1296,9 +1263,6 @@
   let callMuted = false;
   let callRecognition = null;
 
-  // If running inside the Emoi Android app, AndroidVoice is injected by
-  // MainActivity.kt and gives us native speech recognition + text-to-speech,
-  // since Android's WebView doesn't support the browser's Web Speech API.
   const hasNativeVoice = !!window.AndroidVoice;
 
   window.onNativeSpeechResult = function(text){
